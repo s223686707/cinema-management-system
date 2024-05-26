@@ -13,34 +13,42 @@ on:
       - 'notification-service/**'
 
 jobs:
+  determine-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed-services: ${{ steps.filter.outputs.changed-services }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get changed files
+        id: get_changed_files
+        run: |
+          echo "CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})" >> $GITHUB_ENV
+
+      - name: Filter changed services
+        id: filter
+        run: |
+          changed_files=$(echo "${{ env.CHANGED_FILES }}" | tr ' ' '\n')
+          services=""
+          for service in auth-service api-gateway catalog-service booking-service payment-service notification-service; do
+            if echo "$changed_files" | grep -q "^$service/"; then
+              services="$services,$service"
+            fi
+          done
+          services="${services#,}" # Remove leading comma
+          echo "::set-output name=changed-services::$services"
+
   build-and-deploy:
     runs-on: ubuntu-latest
+    needs: determine-changes
     strategy:
       matrix:
-        service:
-          - auth-service
-          - api-gateway
-          - catalog-service
-          - booking-service
-          - payment-service
-          - notification-service
+        service: [auth-service, api-gateway, catalog-service, booking-service, payment-service, notification-service]
         region: [australia-southeast1]
         project-id: [sit737-24t1-subhash-c10ae83]
         repo: [auth-repo]
-    # Check if the service directory has changed
-    if: |
-      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'auth-service/**') && matrix.service == 'auth-service')) ||
-      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'api-gateway/**') && matrix.service == 'api-gateway')) ||
-      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'catalog-service/**') && matrix.service == 'catalog-service')) ||
-      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'booking-service/**') && matrix.service == 'booking-service')) ||
-      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'payment-service/**') && matrix.service == 'payment-service')) ||
-      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'notification-service/**') && matrix.service == 'notification-service')) ||
-      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'auth-service/**') && matrix.service == 'auth-service')) ||
-      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'api-gateway/**') && matrix.service == 'api-gateway')) ||
-      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'catalog-service/**') && matrix.service == 'catalog-service')) ||
-      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'booking-service/**') && matrix.service == 'booking-service')) ||
-      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'payment-service/**') && matrix.service == 'payment-service')) ||
-      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'notification-service/**') && matrix.service == 'notification-service'))
+    if: contains(needs.determine-changes.outputs.changed-services, matrix.service)
 
     steps:
       - name: Checkout code
