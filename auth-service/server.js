@@ -44,5 +44,5 @@ app.post('/login', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Auth service running on port ${PORT}`);
+  console.log(`Auth servicee running on port ${PORT}`);
 });
