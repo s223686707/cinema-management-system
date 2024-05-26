@@ -4,7 +4,7 @@ exports.manualConfirmPayment = async (req, res) => {
     const token = req.headers['authorization'];
   
     try {
-      // Send a request to the Booking Service to confirm the payments
+      // Send a request to the Booking Service to confirm the payment
       const confirmPaymentResponse = await axios.post('http://booking-service:4000/api/bookings/confirm-payment', 
       {
         bookingId
