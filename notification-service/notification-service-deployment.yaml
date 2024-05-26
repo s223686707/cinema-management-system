@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service # Ensure this matches the labels in the Pod template metadata
+  template:
+    metadata:
+      labels:
+        app: notification-service # This must match the selector.matchLabels
+    spec:
+      containers:
+      - name: notification-service-app
+        image: australia-southeast1-docker.pkg.dev/sit737-24t1-subhash-c10ae83/auth-repo/notification-service:v6.0
+        ports:
+        - containerPort: 8000
+        env:
+          - name: PORT
+            value: "8000"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"

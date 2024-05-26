@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking-service # Ensure this matches the labels in the Pod template metadata
+  template:
+    metadata:
+      labels:
+        app: booking-service # This must match the selector.matchLabels
+    spec:
+      containers:
+      - name: booking-service-app
+        image: australia-southeast1-docker.pkg.dev/sit737-24t1-subhash-c10ae83/auth-repo/booking-service:v4.0
+        ports:
+        - containerPort: 4000
+        env:
+          - name: PORT
+            value: "4000"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"

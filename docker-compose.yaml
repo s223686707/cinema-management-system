@@ -1,0 +1,55 @@
+version: '3'
+services:
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - 8888:8888
+    networks:
+      - my-network
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - 8075:8075
+    networks:
+      - my-network
+    depends_on:
+      - auth-service
+
+  catalog-service:
+    build: ./catalog-service
+    ports:
+      - 3000:3000
+    networks:
+      - my-network
+
+  booking-service:
+    build: ./booking-service
+    ports:
+      - 4000:4000
+    networks:
+      - my-network
+    depends_on:
+      - catalog-service
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - 6000:6000
+    networks:
+      - my-network
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - 8000:8000
+    networks:
+      - my-network
+    depends_on:
+      - booking-service
+      - payment-service
+
+networks:
+  my-network:
+    external: true

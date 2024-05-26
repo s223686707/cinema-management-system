@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cinema-cluster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth # Ensure this matches the labels in the Pod template metadata
+  template:
+    metadata:
+      labels:
+        app: auth # This must match the selector.matchLabels
+    spec:
+      containers:
+      - name: auth-app
+        image: australia-southeast1-docker.pkg.dev/sit737-24t1-subhash-c10ae83/auth-repo/auth-service:v1.0
+        ports:
+        - containerPort: 8888
+        env:
+          - name: PORT
+            value: "8888"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"

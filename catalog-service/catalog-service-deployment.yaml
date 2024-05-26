@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service # Ensure this matches the labels in the Pod template metadata
+  template:
+    metadata:
+      labels:
+        app: catalog-service # This must match the selector.matchLabels
+    spec:
+      containers:
+      - name: catalog-service-app
+        image: australia-southeast1-docker.pkg.dev/sit737-24t1-subhash-c10ae83/auth-repo/catalog-service:v3.0
+        ports:
+        - containerPort: 3000
+        env:
+          - name: PORT
+            value: "3000"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"

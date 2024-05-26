@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway # Ensure this matches the labels in the Pod template metadata
+  template:
+    metadata:
+      labels:
+        app: api-gateway # This must match the selector.matchLabels
+    spec:
+      containers:
+      - name: api-gateway-app
+        image: australia-southeast1-docker.pkg.dev/sit737-24t1-subhash-c10ae83/auth-repo/api-gateway:v2.0
+        ports:
+        - containerPort: 8075
+        env:
+          - name: PORT
+            value: "8075"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
