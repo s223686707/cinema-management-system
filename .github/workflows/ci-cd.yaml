@@ -13,38 +13,11 @@ on:
       - 'notification-service/**'
 
 jobs:
-  determine-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      changed-services: ${{ steps.filter.outputs.changed-services }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Get changed files
-        id: get_changed_files
-        run: |
-          echo "CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})" >> $GITHUB_ENV
-
-      - name: Filter changed services
-        id: filter
-        run: |
-          changed_files=$(echo "${{ env.CHANGED_FILES }}" | tr ' ' '\n')
-          services=""
-          for service in auth-service api-gateway catalog-service booking-service payment-service notification-service; do
-            if echo "$changed_files" | grep -q "^$service/"; then
-              services="$services,$service"
-            fi
-          done
-          services="${services#,}" # Remove leading comma
-          echo "::set-output name=changed-services::$services"
-
   build-and-deploy:
-    needs: determine-changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson(needs.determine-changes.outputs.changed-services) }}
+        service: [auth-service, api-gateway, catalog-service, booking-service, payment-service, notification-service]
         region: [australia-southeast1]
         project-id: [sit737-24t1-subhash-c10ae83]
         repo: [auth-repo]
@@ -77,9 +50,22 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Debug Authentication
+        run: |
+          echo "GCP Service Account Key: ${{ secrets.GCP_SA_KEY }}"
+          gcloud auth list
+          gcloud config list
+
       - name: Configure Docker to use gcloud as a credential helper
+        timeout-minutes: 5
         run: |
           gcloud auth configure-docker ${{ matrix.region }}-docker.pkg.dev || echo "Failed to configure Docker"
+
+      - name: Debug Docker Configuration
+        if: ${{ failure() }}
+        run: |
+          docker info
+          cat ~/.docker/config.json
 
       - name: Push Docker image to Google Artifact Registry
         run: |
@@ -90,9 +76,19 @@ jobs:
         with:
           project_id: ${{ matrix.project-id }}
 
+      - name: Verify Google Cloud SDK installation
+        run: |
+          gcloud --version
+          gcloud components list
+
       - name: Install gke-gcloud-auth-plugin
         run: |
           gcloud components install gke-gcloud-auth-plugin
+
+      - name: Debug Kubernetes Cluster
+        run: |
+          gcloud container clusters get-credentials cinema-cluster --region ${{ matrix.region }} --project ${{ matrix.project-id }}
+          kubectl cluster-info
 
       - name: Deploy to GKE
         run: |
