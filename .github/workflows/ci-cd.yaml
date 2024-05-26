@@ -40,15 +40,14 @@ jobs:
           echo "::set-output name=changed-services::$services"
 
   build-and-deploy:
-    runs-on: ubuntu-latest
     needs: determine-changes
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth-service, api-gateway, catalog-service, booking-service, payment-service, notification-service]
+        service: ${{ fromJson(needs.determine-changes.outputs.changed-services) }}
         region: [australia-southeast1]
         project-id: [sit737-24t1-subhash-c10ae83]
         repo: [auth-repo]
-    if: contains(needs.determine-changes.outputs.changed-services, matrix.service)
 
     steps:
       - name: Checkout code
