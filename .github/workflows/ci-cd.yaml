@@ -85,12 +85,11 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-          # Apply Kubernetes manifests
+          # Delete existing api-gateway pods
+          kubectl delete pods -l app=api-gateway --force --grace-period=0
+
           kubectl apply -f ${{ matrix.service }}/api-gateway-service.yaml
           kubectl apply -f ${{ matrix.service }}/api-gateway-deployment.yaml
 
           # Set the new image for the deployment
-          kubectl set image deployment/api-gateway-deployment api-gateway-app=${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
-
-          # Delete existing api-gateway pods
-          kubectl delete pods -l app=api-gateway --force --grace-period=0
+          kubectl set image deployment/api-gateway api-gateway-app=${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
