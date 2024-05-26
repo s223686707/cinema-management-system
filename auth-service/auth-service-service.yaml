@@ -7,5 +7,5 @@ spec:
   selector:
     app: auth # This should match the Deployment labels
   ports:
-  - port: 80
+  - port: 8888
     targetPort: 8888
