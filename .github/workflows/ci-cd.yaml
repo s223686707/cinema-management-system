@@ -17,10 +17,30 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth-service, api-gateway, catalog-service, booking-service, payment-service, notification-service]
+        service:
+          - auth-service
+          - api-gateway
+          - catalog-service
+          - booking-service
+          - payment-service
+          - notification-service
         region: [australia-southeast1]
         project-id: [sit737-24t1-subhash-c10ae83]
         repo: [auth-repo]
+    # Check if the service directory has changed
+    if: |
+      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'auth-service/**') && matrix.service == 'auth-service')) ||
+      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'api-gateway/**') && matrix.service == 'api-gateway')) ||
+      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'catalog-service/**') && matrix.service == 'catalog-service')) ||
+      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'booking-service/**') && matrix.service == 'booking-service')) ||
+      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'payment-service/**') && matrix.service == 'payment-service')) ||
+      (github.event.pull_request && (contains(github.event.pull_request.changed_files, 'notification-service/**') && matrix.service == 'notification-service')) ||
+      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'auth-service/**') && matrix.service == 'auth-service')) ||
+      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'api-gateway/**') && matrix.service == 'api-gateway')) ||
+      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'catalog-service/**') && matrix.service == 'catalog-service')) ||
+      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'booking-service/**') && matrix.service == 'booking-service')) ||
+      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'payment-service/**') && matrix.service == 'payment-service')) ||
+      (!github.event.pull_request && (contains(github.event.commits[*].modified, 'notification-service/**') && matrix.service == 'notification-service'))
 
     steps:
       - name: Checkout code
@@ -50,22 +70,9 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Debug Authentication
-        run: |
-          echo "GCP Service Account Key: ${{ secrets.GCP_SA_KEY }}"
-          gcloud auth list
-          gcloud config list
-
       - name: Configure Docker to use gcloud as a credential helper
-        timeout-minutes: 5
         run: |
           gcloud auth configure-docker ${{ matrix.region }}-docker.pkg.dev || echo "Failed to configure Docker"
-
-      - name: Debug Docker Configuration
-        if: ${{ failure() }}
-        run: |
-          docker info
-          cat ~/.docker/config.json
 
       - name: Push Docker image to Google Artifact Registry
         run: |
@@ -76,19 +83,9 @@ jobs:
         with:
           project_id: ${{ matrix.project-id }}
 
-      - name: Verify Google Cloud SDK installation
-        run: |
-          gcloud --version
-          gcloud components list
-
       - name: Install gke-gcloud-auth-plugin
         run: |
           gcloud components install gke-gcloud-auth-plugin
-
-      - name: Debug Kubernetes Cluster
-        run: |
-          gcloud container clusters get-credentials cinema-cluster --region ${{ matrix.region }} --project ${{ matrix.project-id }}
-          kubectl cluster-info
 
       - name: Deploy to GKE
         run: |
