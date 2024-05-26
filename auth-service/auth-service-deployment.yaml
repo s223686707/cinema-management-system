@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cinema-cluster
+  name: auth-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth # Ensure this matches the labels in the Pod template metadata
+      app: auth-service # Ensure this matches the labels in the Pod template metadata
   template:
     metadata:
       labels:
-        app: auth # This must match the selector.matchLabels
+        app: auth-service # This must match the selector.matchLabels
     spec:
       containers:
-      - name: auth-app
+      - name: auth-service-app
         image: australia-southeast1-docker.pkg.dev/sit737-24t1-subhash-c10ae83/auth-repo/auth-service:v1.0
         ports:
         - containerPort: 8888
