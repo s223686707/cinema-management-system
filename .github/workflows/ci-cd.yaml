@@ -6,12 +6,18 @@ on:
       - master
     paths:
       - 'auth-service/**'
+      - 'api-gateway/**'
+      - 'catalog-service/**'
+      - 'booking-service/**'
+      - 'payment-service/**'
+      - 'notification-service/**'
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth-service]
+        service: [auth-service, api-gateway, catalog-service, booking-service, payment-service, notification-service]
         region: [australia-southeast1]
         project-id: [sit737-24t1-subhash-c10ae83]
         repo: [auth-repo]
