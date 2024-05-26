@@ -13,7 +13,7 @@ jobs:
         service: [api-gateway]
         region: [australia-southeast1]
         project-id: [sit737-24t1-subhash-c10ae83]
-        repo: [api-gateway-repo]
+        repo: [auth-repo]
 
     steps:
       - name: Checkout code
