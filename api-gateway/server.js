@@ -32,6 +32,7 @@ app.use((err, req, res, next) => {
 });
 
 // Proxy routes with JWT verification
+app.use('/authenticate',proxy('http://auth-service:8888'));
 app.use('/catalog', verifyJWT, proxy('http://catalog-service:3000'));
 app.use('/bookings', verifyJWT, proxy('http://booking-service:4000'));
 app.use('/payments', verifyJWT, proxy('http://payment-service:6000'));
