@@ -13,7 +13,7 @@ jobs:
         service: [api-gateway]
         region: [australia-southeast1]
         project-id: [sit737-24t1-subhash-c10ae83]
-        repo: [auth-repo]
+        repo: [api-gateway-repo]
 
     steps:
       - name: Checkout code
@@ -64,11 +64,10 @@ jobs:
         run: |
           docker push ${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
 
-      - name: Install gke-gcloud-auth-plugin
-        run: |
-          curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz | tar xz --to-stdout ./google-cloud-cli/bin/gke-gcloud-auth-plugin > gke-gcloud-auth-plugin
-          chmod +x gke-gcloud-auth-plugin
-          sudo mv gke-gcloud-auth-plugin /usr/local/bin/
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ matrix.project-id }}
 
       - name: Debug Kubernetes Cluster
         run: |
