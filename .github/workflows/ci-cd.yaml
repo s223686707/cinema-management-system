@@ -64,6 +64,12 @@ jobs:
         run: |
           docker push ${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
 
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          curl -sSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz | tar xz --to-stdout ./google-cloud-cli/bin/gke-gcloud-auth-plugin > gke-gcloud-auth-plugin
+          chmod +x gke-gcloud-auth-plugin
+          sudo mv gke-gcloud-auth-plugin /usr/local/bin/
+
       - name: Debug Kubernetes Cluster
         run: |
           gcloud container clusters get-credentials cinema-cluster --region ${{ matrix.region }} --project ${{ matrix.project-id }}
@@ -71,6 +77,12 @@ jobs:
 
       - name: Deploy to GKE
         run: |
+          # Delete existing api-gateway pods
+          kubectl delete pods -l app=api-gateway --force --grace-period=0
+
+          # Apply Kubernetes manifests
           kubectl apply -f ${{ matrix.service }}/api-gateway-service.yaml
           kubectl apply -f ${{ matrix.service }}/api-gateway-deployment.yaml
+
+          # Set the new image for the deployment
           kubectl set image deployment/api-gateway-deployment api-gateway-app=${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
