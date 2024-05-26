@@ -1,0 +1,68 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - maaster
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, booking-service, catalog-service, notification-service, payment-service]
+        region: [australia-southeast1]
+        project-id: [sit737-24t1-subhash-c10ae83]
+        repo: [auth-repo]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: |
+        cd ${{ matrix.service }}
+        npm install
+
+    - name: Build Docker image
+      run: |
+        cd ${{ matrix.service }}
+        docker build -t ${{ matrix.service }} .
+
+    - name: Tag Docker image
+      run: |
+        docker tag ${{ matrix.service }} ${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Configure Docker to use gcloud as a credential helper
+      run: gcloud auth configure-docker ${{ matrix.region }}-docker.pkg.dev
+
+    - name: Push Docker image to Google Artifact Registry
+      run: |
+        docker push ${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
+
+    - name: Deploy to GKE
+      run: |
+        gcloud container clusters get-credentials cinema-cluster --region ${{ matrix.region }} --project ${{ matrix.project-id }}
+        if [ "${{ matrix.service }}" = "api-gateway" ]; then
+          kubectl apply -f ${{ matrix.service }}/api-gateway-service.yaml
+          kubectl apply -f ${{ matrix.service }}/api-gateway-deployment.yaml
+          kubectl set image deployment/api-gateway-deployment api-gateway-app=${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
+        elif [ "${{ matrix.service }}" = "catalog-service" ]; then
+          kubectl apply -f ${{ matrix.service }}/catalog-service-service.yaml
+          kubectl apply -f ${{ matrix.service }}/catalog-service-deployment.yaml
+          kubectl set image deployment/catalog-service-deployment catalog-service-app=${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
+        else
+          kubectl apply -f ${{ matrix.service }}/service.yaml
+          kubectl apply -f ${{ matrix.service }}/deployment.yaml
+          kubectl set image deployment/${{ matrix.service }}-deployment ${{ matrix.service }}-app=${{ matrix.region }}-docker.pkg.dev/${{ matrix.project-id }}/${{ matrix.repo }}/${{ matrix.service }}:${{ github.sha }}
+        fi
