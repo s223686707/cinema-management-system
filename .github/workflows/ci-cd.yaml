@@ -5,7 +5,6 @@ on:
     branches:
       - master
     paths:
-      - 'auth-service/**'
       - 'api-gateway/**'
       - 'catalog-service/**'
       - 'booking-service/**'
