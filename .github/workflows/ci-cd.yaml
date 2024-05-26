@@ -86,7 +86,7 @@ jobs:
       - name: Deploy to GKE
         run: |
           # Delete existing api-gateway pods
-          kubectl delete pods -l app=api-gateway --force --grace-period=0
+          kubectl delete pods -l app=api-gateway --force --grace-period=0 --ignore-not-found=true
 
           kubectl apply -f ${{ matrix.service }}/api-gateway-service.yaml
           kubectl apply -f ${{ matrix.service }}/api-gateway-deployment.yaml
