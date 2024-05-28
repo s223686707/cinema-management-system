@@ -3,7 +3,7 @@ exports.sendNotification = async (req, res) => {
   
     try {
       // Simulate sending a notification
-      console.log(`Notifications senttt for booking ${bookingId}: ${message}`);
+      console.log(`Notification sent for booking ${bookingId}: ${message}`);
   
       res.json({ success: true, message: 'Notification sent successfully for booking' });
     } catch (err) {
