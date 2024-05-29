@@ -14,5 +14,5 @@ const notificationRoutes = require('./routes/notification.routes');
 app.use('/api/notifications', authMiddleware(), notificationRoutes);
 
 app.listen(PORT, () => {
-  console.log(`Notification service running on port ${PORT}`);
+  console.log(`Notifications service running on port ${PORT}`);
 });
